@@ -48,14 +48,14 @@
 //!
 //! // Build phase
 //! let builder = Builder::new(&logger)?;
-//! let network = builder.create_network(network_flags::EXPLICIT_BATCH)?;
+//! let mut network = builder.create_network(network_flags::EXPLICIT_BATCH)?;
 //! let mut config = builder.create_config()?;
 //!
 //! // Configure memory
 //! config.set_memory_pool_limit(MemoryPoolType::Workspace, 1 << 30)?;
 //!
 //! // Build and serialize
-//! let engine_data = builder.build_serialized_network(&network, &config)?;
+//! let engine_data = builder.build_serialized_network(&mut network, &mut config)?;
 //! std::fs::write("model.engine", &engine_data)?;
 //!
 //! // Inference phase

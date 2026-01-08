@@ -63,26 +63,31 @@ make publish                # Publish to crates.io
 
 ## Architecture
 
-### Three-Layer FFI Design
+### Hybrid FFI Design (autocxx + Minimal C Wrapper)
 
 ```
 ┌─────────────────────────┐
 │  Rust Safe API (trtx)   │  <- RAII, Result<T, Error>, lifetimes
 ├─────────────────────────┤
-│  Raw FFI (trtx-sys)     │  <- Bindgen-generated from wrapper.hpp
+│  Raw FFI (trtx-sys)     │  <- autocxx-generated + logger bridge
 ├─────────────────────────┤
-│  C Wrapper Layer        │  <- wrapper.hpp/cpp (exception handling)
+│  Logger Bridge (C++)    │  <- logger_bridge.hpp/cpp (callbacks only)
 ├─────────────────────────┤
-│  TensorRT-RTX C++ API   │  <- NVIDIA library
+│  TensorRT-RTX C++ API   │  <- NVIDIA library (direct via autocxx)
 └─────────────────────────┘
 ```
 
-**Why three layers?**
-- TensorRT-RTX is C++ with exceptions and classes
-- C wrapper provides `extern "C"` interface with opaque pointers
-- C wrapper catches exceptions and converts to error codes
-- Bindgen generates Rust FFI from C wrapper
-- trtx crate provides safe Rust abstractions
+**Why hybrid approach?**
+- **autocxx** provides direct C++ bindings for most TensorRT classes
+- **Minimal C wrapper** handles Logger callbacks (virtual methods)
+- autocxx automatically handles C++ exceptions and memory management
+- Reduces manual FFI code maintenance
+- Better type safety with C++ templates and classes
+
+**Key components:**
+- `trtx-sys/src/lib.rs`: autocxx include_cpp! macro for TensorRT bindings
+- `trtx-sys/logger_bridge.cpp`: Minimal C wrapper for Logger callbacks
+- `trtx-sys/build.rs`: Builds both autocxx bindings and logger bridge
 
 See `docs/FFI_GUIDE.md` for detailed FFI development workflow.
 
@@ -112,29 +117,32 @@ Runtime → Deserialize Engine → ExecutionContext → Bind Tensors → Execute
 
 ### When Modifying FFI
 
-1. **Update C wrapper** in `trtx-sys/wrapper.hpp` and `trtx-sys/wrapper.cpp`
+1. **Update autocxx bindings** in `trtx-sys/src/lib.rs` (add new `generate!()` calls)
 2. **Rebuild** to regenerate bindings: `cargo clean -p trtx-sys && cargo build`
-3. **Update mock** in `trtx-sys/build.rs` (`generate_mock_bindings`) and `trtx-sys/mock.c`
+3. **Update mock** in `trtx-sys/build.rs` (`generate_mock_bindings`) and `trtx-sys/mock.c` if needed
 4. **Add safe wrapper** in appropriate `trtx/src/*.rs` file
 
-### Naming Conventions
+### Adding New TensorRT Classes
 
-- C functions: `trtx_<class>_<method>` (e.g., `trtx_cuda_engine_get_tensor_name`)
-- Types: `Trtx<ClassName>` (e.g., `TrtxCudaEngine`)
-- Constants: `TRTX_<NAME>` (e.g., `TRTX_SUCCESS`)
+To expose a new TensorRT class via autocxx:
 
-### Error Handling Pattern
-
-All FFI functions follow this signature:
-```c
-int32_t trtx_function_name(
-    // ... input parameters ...
-    char* error_msg,        // Always second-to-last
-    size_t error_msg_len    // Always last
-);
+```rust
+// In trtx-sys/src/lib.rs, inside include_cpp! block:
+generate!("nvinfer1::NewClassName")
+generate!("nvinfer1::newFactoryFunction")
 ```
 
-Return `TRTX_SUCCESS` (0) on success, error code on failure.
+### Logger Bridge (Special Case)
+
+The Logger uses a minimal C wrapper for callbacks:
+- `trtx-sys/logger_bridge.hpp`: Header with C interface
+- `trtx-sys/logger_bridge.cpp`: Implementation bridging Rust callbacks to C++
+- Rust callbacks defined in `trtx/src/logger.rs`
+
+### Error Handling
+
+- **autocxx mode**: C++ exceptions are caught by autocxx, check return values and null pointers
+- **Mock mode**: Uses old error pattern with error_msg buffers for compatibility
 
 ## Mock Mode
 
@@ -154,10 +162,11 @@ Mock mode is **critical** for development. It provides stub implementations allo
 
 ### Build System
 
-- `trtx-sys/build.rs` uses bindgen to auto-generate `bindings.rs` from `wrapper.hpp`
-- Generated file: `target/debug/build/trtx-sys-*/out/bindings.rs`
+- `trtx-sys/build.rs` uses autocxx-build to generate C++ bindings from `src/lib.rs`
+- Also compiles `logger_bridge.cpp` using cc crate
+- Generated files: `target/debug/build/trtx-sys-*/out/` (autocxx-generated)
 - Manual edits to generated files are **overwritten** on rebuild
-- Changes must go in source files (`wrapper.hpp`, `wrapper.cpp`, `build.rs`)
+- Changes must go in source files (`src/lib.rs`, `logger_bridge.cpp`, `build.rs`)
 
 ### Memory Management
 
