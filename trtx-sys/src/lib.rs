@@ -49,6 +49,8 @@ pub mod real_bindings {
         generate!("nvinfer1::IBuilder")
         generate!("nvinfer1::IBuilderConfig")
         generate!("nvinfer1::INetworkDefinition")
+        generate!("nvinfer1::ITensor")
+        generate!("nvinfer1::ILayer")
         generate!("nvinfer1::IRuntime")
         generate!("nvinfer1::ICudaEngine")
         generate!("nvinfer1::IExecutionContext")
@@ -58,6 +60,11 @@ pub mod real_bindings {
         generate!("nvinfer1::TensorIOMode")
         generate!("nvinfer1::MemoryPoolType")
         generate!("nvinfer1::NetworkDefinitionCreationFlag")
+        generate!("nvinfer1::ActivationType")
+        generate!("nvinfer1::PoolingType")
+        generate!("nvinfer1::ElementWiseOperation")
+        generate!("nvinfer1::MatrixOperation")
+        generate!("nvinfer1::Weights")
         
         // NOTE: createInferBuilder/Runtime moved to logger_bridge.cpp (autocxx struggles with these)
         
@@ -125,6 +132,90 @@ pub mod real_bindings {
             pool_type: i32,
             limit: usize,
         );
+        
+        // Network methods
+        pub fn network_add_input(
+            network: *mut std::ffi::c_void,
+            name: *const std::os::raw::c_char,
+            data_type: i32,
+            dims: *const i32,
+            nb_dims: i32,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_mark_output(
+            network: *mut std::ffi::c_void,
+            tensor: *mut std::ffi::c_void,
+        ) -> bool;
+        
+        pub fn network_get_nb_inputs(network: *mut std::ffi::c_void) -> i32;
+        pub fn network_get_nb_outputs(network: *mut std::ffi::c_void) -> i32;
+        pub fn network_get_input(network: *mut std::ffi::c_void, index: i32) -> *mut std::ffi::c_void;
+        pub fn network_get_output(network: *mut std::ffi::c_void, index: i32) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_convolution(
+            network: *mut std::ffi::c_void,
+            input: *mut std::ffi::c_void,
+            nb_outputs: i32,
+            kernel_size: *const i32,
+            weights: *const std::ffi::c_void,
+            bias: *const std::ffi::c_void,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_activation(
+            network: *mut std::ffi::c_void,
+            input: *mut std::ffi::c_void,
+            type_: i32,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_pooling(
+            network: *mut std::ffi::c_void,
+            input: *mut std::ffi::c_void,
+            type_: i32,
+            window_size: *const i32,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_elementwise(
+            network: *mut std::ffi::c_void,
+            input1: *mut std::ffi::c_void,
+            input2: *mut std::ffi::c_void,
+            op: i32,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_shuffle(
+            network: *mut std::ffi::c_void,
+            input: *mut std::ffi::c_void,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_concatenation(
+            network: *mut std::ffi::c_void,
+            inputs: *mut *mut std::ffi::c_void,
+            nb_inputs: i32,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_matrix_multiply(
+            network: *mut std::ffi::c_void,
+            input0: *mut std::ffi::c_void,
+            op0: i32,
+            input1: *mut std::ffi::c_void,
+            op1: i32,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_constant(
+            network: *mut std::ffi::c_void,
+            dims: *const i32,
+            nb_dims: i32,
+            weights: *const std::ffi::c_void,
+        ) -> *mut std::ffi::c_void;
+        
+        // Tensor methods
+        pub fn tensor_get_name(tensor: *mut std::ffi::c_void) -> *const std::os::raw::c_char;
+        pub fn tensor_set_name(tensor: *mut std::ffi::c_void, name: *const std::os::raw::c_char);
+        pub fn tensor_get_dimensions(
+            tensor: *mut std::ffi::c_void,
+            dims: *mut i32,
+            nb_dims: *mut i32,
+        ) -> *mut std::ffi::c_void;
+        pub fn tensor_get_type(tensor: *mut std::ffi::c_void) -> i32;
         
         // Runtime methods
         pub fn runtime_deserialize_cuda_engine(

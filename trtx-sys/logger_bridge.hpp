@@ -35,6 +35,28 @@ void* builder_create_config(void* builder);
 void* builder_build_serialized_network(void* builder, void* network, void* config, size_t* out_size);
 void builder_config_set_memory_pool_limit(void* config, int32_t pool_type, size_t limit);
 
+// Network methods
+void* network_add_input(void* network, const char* name, int32_t data_type, const int32_t* dims, int32_t nb_dims);
+bool network_mark_output(void* network, void* tensor);
+int32_t network_get_nb_inputs(void* network);
+int32_t network_get_nb_outputs(void* network);
+void* network_get_input(void* network, int32_t index);
+void* network_get_output(void* network, int32_t index);
+void* network_add_convolution(void* network, void* input, int32_t nb_outputs, const int32_t* kernel_size, const void* weights, const void* bias);
+void* network_add_activation(void* network, void* input, int32_t type);
+void* network_add_pooling(void* network, void* input, int32_t type, const int32_t* window_size);
+void* network_add_elementwise(void* network, void* input1, void* input2, int32_t op);
+void* network_add_shuffle(void* network, void* input);
+void* network_add_concatenation(void* network, void** inputs, int32_t nb_inputs);
+void* network_add_matrix_multiply(void* network, void* input0, int32_t op0, void* input1, int32_t op1);
+void* network_add_constant(void* network, const int32_t* dims, int32_t nb_dims, const void* weights);
+
+// Tensor methods
+const char* tensor_get_name(void* tensor);
+void tensor_set_name(void* tensor, const char* name);
+void* tensor_get_dimensions(void* tensor, int32_t* dims, int32_t* nb_dims);
+int32_t tensor_get_type(void* tensor);
+
 // Destruction methods
 void delete_builder(void* builder);
 void delete_network(void* network);

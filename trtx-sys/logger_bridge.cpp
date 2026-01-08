@@ -121,6 +121,242 @@ void builder_config_set_memory_pool_limit(void* config, int32_t pool_type, size_
     }
 }
 
+// Network methods
+void* network_add_input(void* network, const char* name, int32_t data_type, const int32_t* dims, int32_t nb_dims) {
+    if (!network || !name || !dims) return nullptr;
+    try {
+        auto* inetwork = static_cast<nvinfer1::INetworkDefinition*>(network);
+        nvinfer1::Dims dimensions;
+        dimensions.nbDims = nb_dims;
+        for (int32_t i = 0; i < nb_dims && i < nvinfer1::Dims::MAX_DIMS; ++i) {
+            dimensions.d[i] = dims[i];
+        }
+        return inetwork->addInput(name, static_cast<nvinfer1::DataType>(data_type), dimensions);
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+bool network_mark_output(void* network, void* tensor) {
+    if (!network || !tensor) return false;
+    try {
+        auto* inetwork = static_cast<nvinfer1::INetworkDefinition*>(network);
+        auto* itensor = static_cast<nvinfer1::ITensor*>(tensor);
+        inetwork->markOutput(*itensor);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+int32_t network_get_nb_inputs(void* network) {
+    if (!network) return 0;
+    try {
+        auto* inetwork = static_cast<nvinfer1::INetworkDefinition*>(network);
+        return inetwork->getNbInputs();
+    } catch (...) {
+        return 0;
+    }
+}
+
+int32_t network_get_nb_outputs(void* network) {
+    if (!network) return 0;
+    try {
+        auto* inetwork = static_cast<nvinfer1::INetworkDefinition*>(network);
+        return inetwork->getNbOutputs();
+    } catch (...) {
+        return 0;
+    }
+}
+
+void* network_get_input(void* network, int32_t index) {
+    if (!network) return nullptr;
+    try {
+        auto* inetwork = static_cast<nvinfer1::INetworkDefinition*>(network);
+        return inetwork->getInput(index);
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+void* network_get_output(void* network, int32_t index) {
+    if (!network) return nullptr;
+    try {
+        auto* inetwork = static_cast<nvinfer1::INetworkDefinition*>(network);
+        return inetwork->getOutput(index);
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+void* network_add_convolution(void* network, void* input, int32_t nb_outputs, const int32_t* kernel_size, const void* weights, const void* bias) {
+    if (!network || !input || !kernel_size) return nullptr;
+    try {
+        auto* inetwork = static_cast<nvinfer1::INetworkDefinition*>(network);
+        auto* itensor = static_cast<nvinfer1::ITensor*>(input);
+        nvinfer1::Dims dims;
+        dims.nbDims = 2; // Assuming 2D kernel
+        dims.d[0] = kernel_size[0];
+        dims.d[1] = kernel_size[1];
+        
+        nvinfer1::Weights w{static_cast<nvinfer1::DataType>(0), weights, 0};
+        nvinfer1::Weights b{static_cast<nvinfer1::DataType>(0), bias, 0};
+        
+        auto* layer = inetwork->addConvolutionNd(*itensor, nb_outputs, dims, w, b);
+        return layer ? layer->getOutput(0) : nullptr;
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+void* network_add_activation(void* network, void* input, int32_t type) {
+    if (!network || !input) return nullptr;
+    try {
+        auto* inetwork = static_cast<nvinfer1::INetworkDefinition*>(network);
+        auto* itensor = static_cast<nvinfer1::ITensor*>(input);
+        auto* layer = inetwork->addActivation(*itensor, static_cast<nvinfer1::ActivationType>(type));
+        return layer ? layer->getOutput(0) : nullptr;
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+void* network_add_pooling(void* network, void* input, int32_t type, const int32_t* window_size) {
+    if (!network || !input || !window_size) return nullptr;
+    try {
+        auto* inetwork = static_cast<nvinfer1::INetworkDefinition*>(network);
+        auto* itensor = static_cast<nvinfer1::ITensor*>(input);
+        nvinfer1::Dims dims;
+        dims.nbDims = 2; // Assuming 2D pooling
+        dims.d[0] = window_size[0];
+        dims.d[1] = window_size[1];
+        auto* layer = inetwork->addPoolingNd(*itensor, static_cast<nvinfer1::PoolingType>(type), dims);
+        return layer ? layer->getOutput(0) : nullptr;
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+void* network_add_matrix_multiply(void* network, void* input0, int32_t op0, void* input1, int32_t op1) {
+    if (!network || !input0 || !input1) return nullptr;
+    try {
+        auto* inetwork = static_cast<nvinfer1::INetworkDefinition*>(network);
+        auto* itensor0 = static_cast<nvinfer1::ITensor*>(input0);
+        auto* itensor1 = static_cast<nvinfer1::ITensor*>(input1);
+        auto* layer = inetwork->addMatrixMultiply(
+            *itensor0, static_cast<nvinfer1::MatrixOperation>(op0),
+            *itensor1, static_cast<nvinfer1::MatrixOperation>(op1)
+        );
+        return layer ? layer->getOutput(0) : nullptr;
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+void* network_add_constant(void* network, const int32_t* dims, int32_t nb_dims, const void* weights) {
+    if (!network || !dims || !weights) return nullptr;
+    try {
+        auto* inetwork = static_cast<nvinfer1::INetworkDefinition*>(network);
+        nvinfer1::Dims dimensions;
+        dimensions.nbDims = nb_dims;
+        for (int32_t i = 0; i < nb_dims && i < nvinfer1::Dims::MAX_DIMS; ++i) {
+            dimensions.d[i] = dims[i];
+        }
+        nvinfer1::Weights w{static_cast<nvinfer1::DataType>(0), weights, 0};
+        auto* layer = inetwork->addConstant(dimensions, w);
+        return layer ? layer->getOutput(0) : nullptr;
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+void* network_add_elementwise(void* network, void* input1, void* input2, int32_t op) {
+    if (!network || !input1 || !input2) return nullptr;
+    try {
+        auto* inetwork = static_cast<nvinfer1::INetworkDefinition*>(network);
+        auto* itensor1 = static_cast<nvinfer1::ITensor*>(input1);
+        auto* itensor2 = static_cast<nvinfer1::ITensor*>(input2);
+        auto* layer = inetwork->addElementWise(*itensor1, *itensor2, static_cast<nvinfer1::ElementWiseOperation>(op));
+        return layer ? layer->getOutput(0) : nullptr;
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+void* network_add_shuffle(void* network, void* input) {
+    if (!network || !input) return nullptr;
+    try {
+        auto* inetwork = static_cast<nvinfer1::INetworkDefinition*>(network);
+        auto* itensor = static_cast<nvinfer1::ITensor*>(input);
+        auto* layer = inetwork->addShuffle(*itensor);
+        return layer ? layer->getOutput(0) : nullptr;
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+void* network_add_concatenation(void* network, void** inputs, int32_t nb_inputs) {
+    if (!network || !inputs || nb_inputs <= 0) return nullptr;
+    try {
+        auto* inetwork = static_cast<nvinfer1::INetworkDefinition*>(network);
+        std::vector<nvinfer1::ITensor*> tensors;
+        tensors.reserve(nb_inputs);
+        for (int32_t i = 0; i < nb_inputs; ++i) {
+            tensors.push_back(static_cast<nvinfer1::ITensor*>(inputs[i]));
+        }
+        auto* layer = inetwork->addConcatenation(tensors.data(), nb_inputs);
+        return layer ? layer->getOutput(0) : nullptr;
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+// Tensor methods
+const char* tensor_get_name(void* tensor) {
+    if (!tensor) return nullptr;
+    try {
+        auto* itensor = static_cast<nvinfer1::ITensor*>(tensor);
+        return itensor->getName();
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+void tensor_set_name(void* tensor, const char* name) {
+    if (!tensor || !name) return;
+    try {
+        auto* itensor = static_cast<nvinfer1::ITensor*>(tensor);
+        itensor->setName(name);
+    } catch (...) {
+        // Ignore errors
+    }
+}
+
+void* tensor_get_dimensions(void* tensor, int32_t* dims, int32_t* nb_dims) {
+    if (!tensor || !dims || !nb_dims) return nullptr;
+    try {
+        auto* itensor = static_cast<nvinfer1::ITensor*>(tensor);
+        nvinfer1::Dims dimensions = itensor->getDimensions();
+        *nb_dims = dimensions.nbDims;
+        for (int32_t i = 0; i < dimensions.nbDims && i < nvinfer1::Dims::MAX_DIMS; ++i) {
+            dims[i] = dimensions.d[i];
+        }
+        return tensor; // Return success
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+int32_t tensor_get_type(void* tensor) {
+    if (!tensor) return -1;
+    try {
+        auto* itensor = static_cast<nvinfer1::ITensor*>(tensor);
+        return static_cast<int32_t>(itensor->getType());
+    } catch (...) {
+        return -1;
+    }
+}
+
 void* builder_build_serialized_network(void* builder, void* network, void* config, size_t* out_size) {
     if (!builder || !network || !config || !out_size) return nullptr;
     try {
