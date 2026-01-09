@@ -68,11 +68,6 @@ impl Tensor {
         }
     }
 
-    /// Get raw pointer (internal use)
-    pub(crate) fn as_ptr(&self) -> *mut std::ffi::c_void {
-        self.inner
-    }
-
     /// Get tensor data type
     pub fn get_type(&self) -> Result<i32> {
         #[cfg(not(feature = "mock"))]

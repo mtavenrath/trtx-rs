@@ -83,15 +83,23 @@ fn main() {
     // Use correct C++17 flag based on compiler
     if cfg!(target_os = "windows") && cfg!(target_env = "msvc") {
         cc_build.flag("/std:c++17");
+        cc_build.flag("/wd4100"); // Disable unused parameter warning on MSVC
+        cc_build.flag("/wd4996"); // Disable deprecated declaration warning on MSVC
     } else {
         cc_build.flag("-std=c++17");
+        cc_build.flag("-Wno-unused-parameter"); // Suppress unused parameter warnings
+        cc_build.flag("-Wno-deprecated-declarations"); // Suppress deprecated warnings
     }
 
     cc_build.compile("trtx_logger_bridge");
 
     // Build autocxx bindings for main TensorRT API
     // Prepare CUDA include paths for autocxx clang parser
-    let mut clang_args = vec!["-std=c++17".to_string()];
+    let mut clang_args = vec![
+        "-std=c++17".to_string(),
+        "-Wno-unused-parameter".to_string(), // Suppress unused parameter warnings from TensorRT headers
+        "-Wno-deprecated-declarations".to_string(), // Suppress deprecated warnings from TensorRT headers
+    ];
     
     if let Ok(cuda_dir) = env::var("CUDA_ROOT") {
         if cfg!(target_os = "windows") {
@@ -119,11 +127,15 @@ fn main() {
     }
     autocxx_build.include("/usr/local/cuda/include");
 
-    // Set C++17 standard
+    // Set C++17 standard and suppress warnings
     if cfg!(target_os = "windows") && cfg!(target_env = "msvc") {
         autocxx_build.flag("/std:c++17");
+        autocxx_build.flag("/wd4100"); // Disable unused parameter warning
+        autocxx_build.flag("/wd4996"); // Disable deprecated declaration warning
     } else {
         autocxx_build.flag("-std=c++17");
+        autocxx_build.flag("-Wno-unused-parameter"); // Suppress unused parameter warnings
+        autocxx_build.flag("-Wno-deprecated-declarations"); // Suppress deprecated warnings
     }
 
     autocxx_build
