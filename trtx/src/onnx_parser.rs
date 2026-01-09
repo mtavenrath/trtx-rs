@@ -1,6 +1,6 @@
 //! ONNX model parser for TensorRT
 
-use crate::builder::NetworkDefinition;
+use crate::network::NetworkDefinition;
 use crate::error::{Error, Result};
 use crate::logger::Logger;
 

@@ -207,6 +207,79 @@ pub mod real_bindings {
             weights: *const std::ffi::c_void,
         ) -> *mut std::ffi::c_void;
         
+        pub fn network_add_softmax(
+            network: *mut std::ffi::c_void,
+            input: *mut std::ffi::c_void,
+            axes: u32,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_scale(
+            network: *mut std::ffi::c_void,
+            input: *mut std::ffi::c_void,
+            mode: i32,
+            shift: *const std::ffi::c_void,
+            scale: *const std::ffi::c_void,
+            power: *const std::ffi::c_void,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_reduce(
+            network: *mut std::ffi::c_void,
+            input: *mut std::ffi::c_void,
+            op: i32,
+            axes: u32,
+            keep_dims: bool,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_slice(
+            network: *mut std::ffi::c_void,
+            input: *mut std::ffi::c_void,
+            start: *const i32,
+            size: *const i32,
+            stride: *const i32,
+            nb_dims: i32,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_resize(
+            network: *mut std::ffi::c_void,
+            input: *mut std::ffi::c_void,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_topk(
+            network: *mut std::ffi::c_void,
+            input: *mut std::ffi::c_void,
+            op: i32,
+            k: i32,
+            axes: u32,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_gather(
+            network: *mut std::ffi::c_void,
+            data: *mut std::ffi::c_void,
+            indices: *mut std::ffi::c_void,
+            axis: i32,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_select(
+            network: *mut std::ffi::c_void,
+            condition: *mut std::ffi::c_void,
+            then_input: *mut std::ffi::c_void,
+            else_input: *mut std::ffi::c_void,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_assertion(
+            network: *mut std::ffi::c_void,
+            condition: *mut std::ffi::c_void,
+            message: *const std::os::raw::c_char,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_loop(
+            network: *mut std::ffi::c_void,
+        ) -> *mut std::ffi::c_void;
+        
+        pub fn network_add_if_conditional(
+            network: *mut std::ffi::c_void,
+        ) -> *mut std::ffi::c_void;
+        
         // Tensor methods
         pub fn tensor_get_name(tensor: *mut std::ffi::c_void) -> *const std::os::raw::c_char;
         pub fn tensor_set_name(tensor: *mut std::ffi::c_void, name: *const std::os::raw::c_char);

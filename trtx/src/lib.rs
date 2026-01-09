@@ -96,11 +96,13 @@ pub mod cuda;
 pub mod error;
 pub mod executor;
 pub mod logger;
+pub mod network;
 pub mod onnx_parser;
 pub mod runtime;
 
 // Re-export commonly used types
-pub use builder::{Builder, BuilderConfig, NetworkDefinition, Tensor};
+pub use builder::{Builder, BuilderConfig};
+pub use network::{NetworkDefinition, Tensor};
 pub use cuda::{synchronize, DeviceBuffer};
 pub use error::{Error, Result};
 pub use executor::{run_onnx_with_tensorrt, run_onnx_zeroed, TensorInput, TensorOutput};
