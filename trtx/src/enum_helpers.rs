@@ -246,7 +246,10 @@ mod tests {
     #[test]
     fn test_elementwise_op_name() {
         assert_eq!(elementwise_op_name(&ElementWiseOperation::kSUM), "kSUM");
-        assert_eq!(elementwise_op_name(&ElementWiseOperation::kGREATER), "kGREATER");
+        assert_eq!(
+            elementwise_op_name(&ElementWiseOperation::kGREATER),
+            "kGREATER"
+        );
     }
 
     #[test]
@@ -258,7 +261,10 @@ mod tests {
     #[test]
     fn test_activation_type_name() {
         assert_eq!(activation_type_name(&ActivationType::kRELU), "kRELU");
-        assert_eq!(activation_type_name(&ActivationType::kGELU_ERF), "kGELU_ERF");
+        assert_eq!(
+            activation_type_name(&ActivationType::kGELU_ERF),
+            "kGELU_ERF"
+        );
     }
 
     #[test]

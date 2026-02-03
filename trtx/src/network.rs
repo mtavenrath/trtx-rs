@@ -162,7 +162,7 @@ impl GatherLayer {
                     trtx_sys::nvinfer1::IGatherLayer,
                 >(self.inner);
 
-                layer_pin.as_mut().setMode(mode);  // Correct method name
+                layer_pin.as_mut().setMode(mode); // Correct method name
             }
             Ok(())
         }
@@ -208,7 +208,7 @@ impl ScatterLayer {
                     trtx_sys::nvinfer1::IScatterLayer,
                 >(self.inner);
 
-                layer_pin.as_mut().setAxis(axis);  // setAxis expects i32
+                layer_pin.as_mut().setAxis(axis); // setAxis expects i32
             }
             Ok(())
         }
@@ -403,11 +403,9 @@ impl NetworkDefinition {
             let mut network_pin = unsafe { std::pin::Pin::new_unchecked(network_ref) };
 
             let tensor_ptr = unsafe {
-                network_pin.as_mut().addInput(
-                    name_cstr.as_ptr(),
-                    data_type,
-                    &dims_struct,
-                )
+                network_pin
+                    .as_mut()
+                    .addInput(name_cstr.as_ptr(), data_type, &dims_struct)
             };
 
             if tensor_ptr.is_null() {
@@ -544,10 +542,9 @@ impl NetworkDefinition {
                     trtx_sys::nvinfer1::INetworkDefinition,
                 >(self.inner);
 
-                let layer_ptr = network_pin.as_mut().addActivation(
-                    std::pin::Pin::new_unchecked(input_ref),
-                    activation_type,
-                );
+                let layer_ptr = network_pin
+                    .as_mut()
+                    .addActivation(std::pin::Pin::new_unchecked(input_ref), activation_type);
 
                 if layer_ptr.is_null() {
                     return Err(Error::Runtime("Failed to add activation layer".to_string()));
@@ -582,10 +579,9 @@ impl NetworkDefinition {
                     trtx_sys::nvinfer1::INetworkDefinition,
                 >(self.inner);
 
-                let layer_ptr = network_pin.as_mut().addUnary(
-                    std::pin::Pin::new_unchecked(input_ref),
-                    op,
-                );
+                let layer_ptr = network_pin
+                    .as_mut()
+                    .addUnary(std::pin::Pin::new_unchecked(input_ref), op);
 
                 if layer_ptr.is_null() {
                     return Err(Error::Runtime("Failed to add unary layer".to_string()));
@@ -652,10 +648,9 @@ impl NetworkDefinition {
                     trtx_sys::nvinfer1::INetworkDefinition,
                 >(self.inner);
 
-                let layer_ptr = network_pin.as_mut().addCast(
-                    std::pin::Pin::new_unchecked(input_ref),
-                    to_type,
-                );
+                let layer_ptr = network_pin
+                    .as_mut()
+                    .addCast(std::pin::Pin::new_unchecked(input_ref), to_type);
 
                 if layer_ptr.is_null() {
                     return Err(Error::Runtime("Failed to add cast layer".to_string()));
@@ -731,11 +726,10 @@ impl NetworkDefinition {
             let input_ref = unsafe { &mut *(input.inner as *mut trtx_sys::nvinfer1::ITensor) };
             let mut input_pin = unsafe { std::pin::Pin::new_unchecked(input_ref) };
 
-            let layer_ptr = network_pin.as_mut().addPoolingNd(
-                input_pin.as_mut(),
-                pooling_type,
-                &window_dims,
-            );
+            let layer_ptr =
+                network_pin
+                    .as_mut()
+                    .addPoolingNd(input_pin.as_mut(), pooling_type, &window_dims);
 
             if layer_ptr.is_null() {
                 return Err(Error::Runtime("Failed to add pooling layer".to_string()));
@@ -993,8 +987,8 @@ impl NetworkDefinition {
                 network_pin.as_mut().addDeconvolutionNd(
                     input_ref,
                     nb_output_maps as i64, // Convert i32 to i64
-                    kernel_dims,  // Pass by value, not by reference
-                    kernel_w, // Passing Weights by value
+                    kernel_dims,           // Pass by value, not by reference
+                    kernel_w,              // Passing Weights by value
                     bias_w,
                 ) as *mut std::ffi::c_void
             };
@@ -1059,7 +1053,7 @@ impl NetworkDefinition {
         #[cfg(not(feature = "mock"))]
         {
             use trtx_sys::nvinfer1::DataType;
-            
+
             // Calculate element count from dimensions
             let element_count: i64 = dims.iter().map(|&d| d as i64).product();
 
@@ -1321,7 +1315,8 @@ impl NetworkDefinition {
             // Note: TensorRT requires a true 0D scalar tensor (shape []) for axis
             // The API validates: axisDims.nbDims == 0
             let axis_bytes = axis.to_le_bytes();
-            let axis_constant = self.add_constant(&[], &axis_bytes, trtx_sys::nvinfer1::DataType::kINT32)?;
+            let axis_constant =
+                self.add_constant(&[], &axis_bytes, trtx_sys::nvinfer1::DataType::kINT32)?;
             let axis_tensor = axis_constant.get_output(0)?;
 
             self.add_cumulative_with_axis_tensor(input, &axis_tensor, op, exclusive, reverse)
@@ -1333,7 +1328,7 @@ impl NetworkDefinition {
     }
 
     /// Add a Cumulative layer with pre-created axis tensor
-    /// 
+    ///
     /// This variant allows the caller to manage the axis constant's lifetime.
     /// The axis tensor must be a true 0D scalar (shape []) constant with INT32 type.
     /// TensorRT validates that axisDims.nbDims == 0.
@@ -1573,7 +1568,7 @@ impl NetworkDefinition {
                     std::pin::Pin::new_unchecked(data_ref),
                     std::pin::Pin::new_unchecked(indices_ref),
                     std::pin::Pin::new_unchecked(updates_ref),
-                    mode,  // Pass ScatterMode, not axis
+                    mode, // Pass ScatterMode, not axis
                 );
 
                 if layer_ptr.is_null() {
@@ -1615,7 +1610,7 @@ impl NetworkDefinition {
                 let layer_ptr = network_pin.as_mut().addQuantize(
                     std::pin::Pin::new_unchecked(input_ref),
                     std::pin::Pin::new_unchecked(scale_ref),
-                    output_type,  // Third parameter: output data type
+                    output_type, // Third parameter: output data type
                 );
 
                 if layer_ptr.is_null() {
@@ -1657,7 +1652,7 @@ impl NetworkDefinition {
                 let layer_ptr = network_pin.as_mut().addDequantize(
                     std::pin::Pin::new_unchecked(input_ref),
                     std::pin::Pin::new_unchecked(scale_ref),
-                    output_type,  // Third parameter: output data type
+                    output_type, // Third parameter: output data type
                 );
 
                 if layer_ptr.is_null() {
