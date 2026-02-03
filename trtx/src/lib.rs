@@ -91,21 +91,59 @@
 // Allow unnecessary casts - they're needed for real mode (u32) but not mock mode (i32)
 #![cfg_attr(feature = "mock", allow(clippy::unnecessary_cast))]
 
+// Mock mode - pure Rust implementations that return errors
+#[cfg(feature = "mock")]
+mod mock;
+
+// Real TensorRT mode - FFI bindings (default)
+#[cfg(not(feature = "mock"))]
 pub mod builder;
+#[cfg(not(feature = "mock"))]
 pub mod cuda;
 pub mod error;
+#[cfg(not(feature = "mock"))]
 pub mod executor;
+#[cfg(not(feature = "mock"))]
 pub mod logger;
+#[cfg(not(feature = "mock"))]
 pub mod network;
+#[cfg(not(feature = "mock"))]
 pub mod onnx_parser;
+#[cfg(not(feature = "mock"))]
 pub mod runtime;
 
 // Re-export commonly used types
+
+// Real TensorRT mode - re-export from real modules (default)
+#[cfg(not(feature = "mock"))]
 pub use builder::{Builder, BuilderConfig};
+#[cfg(not(feature = "mock"))]
 pub use network::{NetworkDefinition, Tensor};
+#[cfg(not(feature = "mock"))]
 pub use cuda::{synchronize, DeviceBuffer};
-pub use error::{Error, Result};
+#[cfg(not(feature = "mock"))]
 pub use executor::{run_onnx_with_tensorrt, run_onnx_zeroed, TensorInput, TensorOutput};
+#[cfg(not(feature = "mock"))]
 pub use logger::{LogHandler, Logger, Severity, StderrLogger};
+#[cfg(not(feature = "mock"))]
 pub use onnx_parser::OnnxParser;
+#[cfg(not(feature = "mock"))]
 pub use runtime::{CudaEngine, ExecutionContext, Runtime};
+
+// Mock mode - re-export from mock module
+#[cfg(feature = "mock")]
+pub use mock::{
+    Builder, BuilderConfig, CudaEngine, DeviceBuffer, ExecutionContext, LogHandler, Logger,
+    MemoryPoolType, NetworkDefinition, OnnxParser, Runtime, Severity, StderrLogger, Tensor,
+    TensorInput, TensorOutput, get_default_stream, network_flags, run_onnx_with_tensorrt,
+    run_onnx_zeroed, synchronize,
+};
+
+// For mock mode, also need builder submodule for network_flags
+#[cfg(feature = "mock")]
+pub mod builder {
+    pub use crate::mock::{network_flags, BuilderConfig, MemoryPoolType};
+}
+
+// Error types are always available (not feature-dependent)
+pub use error::{Error, Result};

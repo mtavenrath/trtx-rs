@@ -11,15 +11,20 @@ keywords = ["tensorrt", "inference", "deep-learning", "nvidia", "gpu"]
 categories = ["api-bindings", "science"]
 
 [features]
-default = []
-# Mock mode for development without TensorRT-RTX installed
-mock = ["trtx-sys/mock"]
+default = ["trtx-sys-dep", "cxx-dep", "libc-dep"]
+# Mock mode for development without TensorRT-RTX installed  
+mock = []
+
+# Internal features (don't use directly)
+trtx-sys-dep = ["dep:trtx-sys"]
+cxx-dep = ["dep:cxx"]
+libc-dep = ["dep:libc"]
 
 [dependencies]
-trtx-sys = { version = "0.2.0", path = "../trtx-sys", default-features = false }
 thiserror = "2.0"
-cxx = "1.0"
-libc = "0.2"
+trtx-sys = { version = "0.2.0", path = "../trtx-sys", optional = true }
+cxx = { version = "1.0", optional = true }
+libc = { version = "0.2", optional = true }
 
 [dev-dependencies]
 # For examples and tests

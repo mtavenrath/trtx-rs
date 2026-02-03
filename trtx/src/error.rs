@@ -43,8 +43,8 @@ pub enum Error {
 }
 
 impl Error {
-    /// Create error from FFI error code and message buffer (mock mode)
-    #[cfg(feature = "mock")]
+    /// Create error from FFI error code and message buffer
+    #[cfg(not(feature = "mock"))]
     pub(crate) fn from_ffi(code: i32, error_msg: &[i8]) -> Self {
         let msg = Self::parse_error_msg(error_msg);
 
@@ -59,8 +59,8 @@ impl Error {
         }
     }
 
-    /// Parse error message from C string buffer (mock mode)
-    #[cfg(feature = "mock")]
+    /// Parse error message from C string buffer
+    #[cfg(not(feature = "mock"))]
     fn parse_error_msg(buffer: &[i8]) -> String {
         // Find null terminator
         let len = buffer.iter().position(|&c| c == 0).unwrap_or(buffer.len());
@@ -83,7 +83,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "mock")]
+    #[cfg(not(feature = "mock"))]
     fn test_parse_error_msg() {
         let msg = b"test error\0".map(|b| b as i8);
         let parsed = Error::parse_error_msg(&msg);
@@ -91,7 +91,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "mock")]
+    #[cfg(not(feature = "mock"))]
     fn test_from_ffi() {
         let msg = b"test\0".map(|b| b as i8);
         let err = Error::from_ffi(trtx_sys::TRTX_ERROR_INVALID_ARGUMENT as i32, &msg);

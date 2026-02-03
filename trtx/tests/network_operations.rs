@@ -1,3 +1,5 @@
+#![cfg(not(feature = "mock"))]
+
 //! Integration tests for common TensorRT network operations
 //!
 //! These tests verify that the trtx API correctly handles various layer types

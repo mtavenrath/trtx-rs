@@ -1,3 +1,5 @@
+#![cfg(not(feature = "mock"))]
+
 //! Math operation verification tests
 //!
 //! These tests build networks, run inference, and verify outputs match expected values.
